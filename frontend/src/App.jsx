@@ -1,122 +1,157 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+
+import { useState } from "react";
+import "./App.css";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [answer, setAnswer] = useState("");
+  const [result, setResult] = useState("");
+  const [checking, setChecking] = useState(false);
+
+  const handleSubmit = (e) => {
+    const handleSubmit = (e) => {
+      e.preventDefault();
+
+      if (!answer.trim()) {
+        setResult("Please enter the CAPTCHA.");
+        return;
+      }
+
+      setChecking(true);
+      setResult("");
+
+      setTimeout(() => {
+        if (answer.trim().toUpperCase() === "AB7K9") {
+          setResult("Correct! You earned +1 Gem.");
+        } else {
+          setResult("Wrong CAPTCHA. You earned +0.5 Gem.");
+        }
+
+        setChecking(false);
+        setAnswer("");
+      }, 800);
+    };
+
+    if (answer.trim().toUpperCase() === "AB7K9") {
+      setResult("Correct! You earned +1 Gem.");
+    } else {
+      setResult("Wrong CAPTCHA. You earned +0.5 Gem.");
+    }
+
+    setAnswer("");
+  };
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+    <div className="app">
+      <header className="navbar">
+        <div className="logo">
+          VELOop <span>Rewards</span>
         </div>
-        <div>
-          <h1>Get started</h1>
+
+        <nav>
+          <a href="#earn">Earn</a>
+          <a href="#rewards">Rewards</a>
+          <a href="#history">History</a>
+        </nav>
+
+        <div className="wallet">
+          💎 <span>0 Gems</span>
+        </div>
+      </header>
+
+      <main>
+        <section className="earn-section" id="earn">
+          <div className="earn-content">
+            <p className="small-title">EARN REWARDS</p>
+
+            <h1>
+              Complete CAPTCHA
+              <br />
+              <span>and earn Gems</span>
+            </h1>
+
+            <p className="description">
+              Complete the CAPTCHA correctly to earn rewards.
+              Keep your streak going and collect more Gems.
+            </p>
+
+            <div className="captcha-card">
+              <div className="card-header">
+                <h2>CAPTCHA Challenge</h2>
+                <span>+1 Gem</span>
+              </div>
+
+              <div className="captcha-box">
+                <strong>AB7K9</strong>
+
+                <button
+                  type="button"
+                  className="refresh-btn"
+                  onClick={() => {
+                    setResult("New CAPTCHA generated.");
+                    setAnswer("");
+                  }}
+                >
+                  ↻
+                </button>
+              </div>
+
+              <form onSubmit={handleSubmit}>
+                <input
+                  type="text"
+                  placeholder="Enter CAPTCHA"
+                  value={answer}
+                  onChange={(e) => {
+                    setAnswer(e.target.value);
+                    setResult("");
+                  }}
+                />
+
+                <button type="submit">
+                  Verify & Earn
+                </button>
+              </form>
+
+              {result && <p className="captcha-result">{result}</p>}
+            </div>
+          </div>
+
+          <div className="stats-card">
+            <h3>Your Progress</h3>
+
+            <div className="stat">
+              <span>🔥 Current Streak</span>
+              <strong>0 Days</strong>
+            </div>
+
+            <div className="stat">
+              <span>💎 Total Gems</span>
+              <strong>0</strong>
+            </div>
+
+            <div className="stat">
+              <span>🎯 Challenges</span>
+              <strong>0</strong>
+            </div>
+          </div>
+        </section>
+
+        <section className="reward-preview" id="rewards">
+          <p className="small-title">YOUR REWARDS</p>
+          <h2>Turn your Gems into rewards</h2>
           <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
+            Complete more challenges and build your balance.
           </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+        </section>
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+        <section className="history-preview" id="history">
+          <p className="small-title">RECENT ACTIVITY</p>
+          <h2>Transaction History</h2>
+          <p>No transactions yet.</p>
+        </section>
+      </main>
+    </div>
+  );
 }
 
-export default App
+export default App;
+
