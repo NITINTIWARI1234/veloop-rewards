@@ -1,42 +1,57 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 import "./App.css";
 
+const API_URL = "http://localhost:5000";
+
 function App() {
+  const [captcha, setCaptcha] = useState(null);
   const [answer, setAnswer] = useState("");
   const [result, setResult] = useState("");
   const [checking, setChecking] = useState(false);
 
+  const fetchCaptcha = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/captcha`);
+      setCaptcha(response.data.captcha);
+    } catch (error) {
+      console.log("Failed to fetch CAPTCHA:", error.message);
+    }
+  };
+
+  useEffect(() => {
+    fetchCaptcha();
+  }, []);
+
   const handleSubmit = (e) => {
-    const handleSubmit = (e) => {
-      e.preventDefault();
+    e.preventDefault();
 
-      if (!answer.trim()) {
-        setResult("Please enter the CAPTCHA.");
-        return;
-      }
-
-      setChecking(true);
-      setResult("");
-
-      setTimeout(() => {
-        if (answer.trim().toUpperCase() === "AB7K9") {
-          setResult("Correct! You earned +1 Gem.");
-        } else {
-          setResult("Wrong CAPTCHA. You earned +0.5 Gem.");
-        }
-
-        setChecking(false);
-        setAnswer("");
-      }, 800);
-    };
-
-    if (answer.trim().toUpperCase() === "AB7K9") {
-      setResult("Correct! You earned +1 Gem.");
-    } else {
-      setResult("Wrong CAPTCHA. You earned +0.5 Gem.");
+    if (!answer.trim()) {
+      setResult("Please enter the CAPTCHA.");
+      return;
     }
 
+    setChecking(true);
+    setResult("");
+
+    setTimeout(() => {
+      if (
+        answer.trim().toUpperCase() ===
+        captcha?.correctAnswer?.toUpperCase()
+      ) {
+        setResult("Correct! You earned +1 Gem.");
+      } else {
+        setResult("Wrong CAPTCHA. You earned +0.5 Gem.");
+      }
+
+      setChecking(false);
+      setAnswer("");
+    }, 800);
+  };
+
+  const handleRefresh = () => {
+    fetchCaptcha();
+    setResult("New CAPTCHA generated.");
     setAnswer("");
   };
 
@@ -81,15 +96,14 @@ function App() {
               </div>
 
               <div className="captcha-box">
-                <strong>AB7K9</strong>
+                <strong>
+                  {captcha ? captcha.question : "Loading..."}
+                </strong>
 
                 <button
                   type="button"
                   className="refresh-btn"
-                  onClick={() => {
-                    setResult("New CAPTCHA generated.");
-                    setAnswer("");
-                  }}
+                  onClick={handleRefresh}
                 >
                   ↻
                 </button>
@@ -106,12 +120,14 @@ function App() {
                   }}
                 />
 
-                <button type="submit">
-                  Verify & Earn
+                <button type="submit" disabled={checking}>
+                  {checking ? "Checking..." : "Verify & Earn"}
                 </button>
               </form>
 
-              {result && <p className="captcha-result">{result}</p>}
+              {result && (
+                <p className="captcha-result">{result}</p>
+              )}
             </div>
           </div>
 
@@ -154,4 +170,3 @@ function App() {
 }
 
 export default App;
-
