@@ -1,19 +1,106 @@
 const Captcha = require("../models/Captcha");
+const User = require("../models/User");
 
 const getCaptcha = async (req, res) => {
   try {
-    // Temporary CAPTCHA for frontend testing
-    const captcha = {
-      question: "AB7K9",
-      correctAnswer: "AB7K9",
-      reward: 1,
-    };
+    const captcha = await Captcha.findOne({
+      isActive: true,
+      expiresAt: { $gt: new Date() },
+    });
+
+    if (!captcha) {
+      return res.status(404).json({
+        success: false,
+        message: "No CAPTCHA available",
+      });
+    }
 
     res.json({
       success: true,
       captcha,
     });
   } catch (error) {
+    console.error("CAPTCHA error:", error.message);
+
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
+const verifyCaptcha = async (req, res) => {
+  try {
+    const { captchaId, answer, userId } = req.body;
+
+    if (!captchaId || !answer || !userId) {
+      return res.status(400).json({
+        success: false,
+        message: "captchaId, answer and userId are required",
+      });
+    }
+
+    const captcha = await Captcha.findById(captchaId);
+
+    if (!captcha) {
+      return res.status(404).json({
+        success: false,
+        message: "CAPTCHA not found",
+      });
+    }
+
+    if (!captcha.isActive || captcha.expiresAt < new Date()) {
+      return res.status(400).json({
+        success: false,
+        message: "CAPTCHA has expired",
+      });
+    }
+
+    if (captcha.userId.toString() !== userId) {
+      return res.status(403).json({
+        success: false,
+        message: "CAPTCHA does not belong to this user",
+      });
+    }
+
+    if (
+      answer.trim().toUpperCase() !==
+      captcha.correctAnswer.trim().toUpperCase()
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Wrong CAPTCHA",
+      });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      {
+        $inc: {
+          gems: captcha.reward,
+        },
+      },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    captcha.isActive = false;
+    await captcha.save();
+
+    res.json({
+      success: true,
+      message: `Correct! You earned +${captcha.reward} Gem.`,
+      gems: user.gems,
+    });
+  } catch (error) {
+    console.error("Verify CAPTCHA error:", error.message);
+
     res.status(500).json({
       success: false,
       message: "Server error",
@@ -23,4 +110,5 @@ const getCaptcha = async (req, res) => {
 
 module.exports = {
   getCaptcha,
+  verifyCaptcha,
 };

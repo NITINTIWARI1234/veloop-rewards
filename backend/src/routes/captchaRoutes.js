@@ -1,9 +1,14 @@
 const express = require("express");
 
-const { getCaptcha } = require("../controllers/captchaController");
+const {
+  getCaptcha,
+  verifyCaptcha,
+} = require("../controllers/captchaController");
 
 const router = express.Router();
 
 router.get("/", getCaptcha);
+
+router.post("/verify", verifyCaptcha);
 
 module.exports = router;
