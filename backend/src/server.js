@@ -11,6 +11,8 @@ const connectDB = require("./config/db");
 
 const healthRoutes = require("./routes/healthRoutes");
 const captchaRoutes = require("./routes/captchaRoutes");
+const userRoutes = require("./routes/userRoutes");
+const transactionRoutes = require("./routes/transactionRoutes");
 
 const app = express();
 
@@ -18,9 +20,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+
 // Routes
 app.use("/api/health", healthRoutes);
 app.use("/api/captcha", captchaRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/transactions", transactionRoutes);
 
 // Home route
 app.get("/", (req, res) => {

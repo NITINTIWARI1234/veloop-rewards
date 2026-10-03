@@ -1,5 +1,6 @@
 const Captcha = require("../models/Captcha");
 const User = require("../models/User");
+const Transaction = require("../models/Transaction");
 
 const getCaptcha = async (req, res) => {
   try {
@@ -73,15 +74,7 @@ const verifyCaptcha = async (req, res) => {
       });
     }
 
-    const user = await User.findByIdAndUpdate(
-      userId,
-      {
-        $inc: {
-          gems: captcha.reward,
-        },
-      },
-      { new: true }
-    );
+    const user = await User.findById(userId);
 
     if (!user) {
       return res.status(404).json({
@@ -90,6 +83,26 @@ const verifyCaptcha = async (req, res) => {
       });
     }
 
+    user.gems += captcha.reward;
+    user.streak += 1;
+
+    await user.save();
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    await Transaction.create({
+      userId: user._id,
+      type: "EARN",
+      amount: captcha.reward,
+      source: "CAPTCHA",
+      description: "Completed CAPTCHA challenge",
+    });
+
     captcha.isActive = false;
     await captcha.save();
 
@@ -97,6 +110,7 @@ const verifyCaptcha = async (req, res) => {
       success: true,
       message: `Correct! You earned +${captcha.reward} Gem.`,
       gems: user.gems,
+      streak: user.streak,
     });
   } catch (error) {
     console.error("Verify CAPTCHA error:", error.message);

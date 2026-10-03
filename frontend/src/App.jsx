@@ -3,12 +3,22 @@ import axios from "axios";
 import "./App.css";
 
 const API_URL = "http://localhost:5000";
+const USER_ID = "6abcd9743be173662986f0b0";
 
 function App() {
   const [captcha, setCaptcha] = useState(null);
   const [answer, setAnswer] = useState("");
   const [result, setResult] = useState("");
   const [checking, setChecking] = useState(false);
+  const [gems, setGems] = useState(0);
+  const [streak, setStreak] = useState(0);
+  const [transactions, setTransactions] = useState([]);
+
+  const challengeCount = transactions.filter(
+    (transaction) =>
+      transaction.type === "EARN" &&
+      transaction.source === "CAPTCHA"
+  ).length;
 
   const fetchCaptcha = async () => {
     try {
@@ -19,11 +29,41 @@ function App() {
     }
   };
 
+  const fetchUser = async () => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/api/users/${USER_ID}`
+      );
+
+      setGems(response.data.user.gems);
+      setStreak(response.data.user.streak);
+    } catch (error) {
+      console.log("Failed to fetch user:", error.message);
+    }
+  };
+
+  const fetchTransactions = async () => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/api/transactions/${USER_ID}`
+      );
+
+      setTransactions(response.data.transactions);
+    } catch (error) {
+      console.log(
+        "Failed to fetch transactions:",
+        error.message
+      );
+    }
+  };
+
   useEffect(() => {
     fetchCaptcha();
+    fetchUser();
+    fetchTransactions();
   }, []);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!answer.trim()) {
@@ -31,22 +71,40 @@ function App() {
       return;
     }
 
+    if (!captcha) {
+      setResult("CAPTCHA is not available.");
+      return;
+    }
+
     setChecking(true);
     setResult("");
 
-    setTimeout(() => {
-      if (
-        answer.trim().toUpperCase() ===
-        captcha?.correctAnswer?.toUpperCase()
-      ) {
-        setResult("Correct! You earned +1 Gem.");
-      } else {
-        setResult("Wrong CAPTCHA. You earned +0.5 Gem.");
-      }
+    try {
+      const response = await axios.post(
+        `${API_URL}/api/captcha/verify`,
+        {
+          captchaId: captcha._id,
+          answer: answer,
+          userId: USER_ID,
+        }
+      );
 
-      setChecking(false);
+      setResult(response.data.message);
+      setGems(response.data.gems);
+      setStreak(response.data.streak);
+
       setAnswer("");
-    }, 800);
+
+      // Get a new CAPTCHA after successful verification
+      fetchCaptcha();
+      fetchTransactions();
+    } catch (error) {
+      setResult(
+        error.response?.data?.message || "Verification failed."
+      );
+    } finally {
+      setChecking(false);
+    }
   };
 
   const handleRefresh = () => {
@@ -69,7 +127,7 @@ function App() {
         </nav>
 
         <div className="wallet">
-          💎 <span>0 Gems</span>
+          💎 <span>{gems} Gems</span>
         </div>
       </header>
 
@@ -136,17 +194,17 @@ function App() {
 
             <div className="stat">
               <span>🔥 Current Streak</span>
-              <strong>0 Days</strong>
+              <strong>{streak} Days</strong>
             </div>
 
             <div className="stat">
               <span>💎 Total Gems</span>
-              <strong>0</strong>
+              <strong>{gems}</strong>
             </div>
 
             <div className="stat">
               <span>🎯 Challenges</span>
-              <strong>0</strong>
+              <strong>{challengeCount}</strong>
             </div>
           </div>
         </section>
@@ -162,7 +220,32 @@ function App() {
         <section className="history-preview" id="history">
           <p className="small-title">RECENT ACTIVITY</p>
           <h2>Transaction History</h2>
-          <p>No transactions yet.</p>
+
+          {transactions.length === 0 ? (
+            <p>No transactions yet.</p>
+          ) : (
+            <div className="transaction-list">
+              {transactions.map((transaction) => (
+                <div
+                  className="transaction-item"
+                  key={transaction._id}
+                >
+                  <div>
+                    <strong>{transaction.description}</strong>
+                    <p>
+                      {transaction.source} •{" "}
+                      {new Date(transaction.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+
+                  <strong>
+                    {transaction.type === "EARN" ? "+" : "-"}
+                    {transaction.amount} Gem
+                  </strong>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
       </main>
     </div>
