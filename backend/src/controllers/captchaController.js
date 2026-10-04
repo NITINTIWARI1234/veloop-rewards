@@ -74,6 +74,26 @@ const verifyCaptcha = async (req, res) => {
       });
     }
 
+    // Check daily CAPTCHA limit
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const DAILY_LIMIT = 5;
+
+    const todayCompletedChecks = await Transaction.countDocuments({
+      userId,
+      type: "EARN",
+      source: "CAPTCHA",
+      createdAt: { $gte: startOfDay },
+    });
+
+    if (todayCompletedChecks >= DAILY_LIMIT) {
+      return res.status(400).json({
+        success: false,
+        message: "Daily CAPTCHA limit reached. Come back tomorrow.",
+      });
+    }
+
     const user = await User.findById(userId);
 
     if (!user) {
@@ -84,16 +104,44 @@ const verifyCaptcha = async (req, res) => {
     }
 
     user.gems += captcha.reward;
-    user.streak += 1;
+
+    const now = new Date();
+
+    if (!user.lastCompletedAt) {
+      // First completed challenge
+      user.streak = 1;
+    } else {
+      const lastDate = new Date(user.lastCompletedAt);
+
+      const today = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate()
+      );
+
+      const lastCompletedDay = new Date(
+        lastDate.getFullYear(),
+        lastDate.getMonth(),
+        lastDate.getDate()
+      );
+
+      const differenceInDays =
+        (today - lastCompletedDay) / (1000 * 60 * 60 * 24);
+
+      if (differenceInDays === 1) {
+        // Completed on the next consecutive day
+        user.streak += 1;
+      } else if (differenceInDays > 1) {
+        // Missed one or more days
+        user.streak = 1;
+      }
+
+      // Same-day completion keeps the streak unchanged
+    }
+
+    user.lastCompletedAt = now;
 
     await user.save();
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
 
     await Transaction.create({
       userId: user._id,

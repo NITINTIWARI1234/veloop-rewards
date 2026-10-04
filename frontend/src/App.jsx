@@ -14,6 +14,12 @@ function App() {
   const [streak, setStreak] = useState(0);
   const [transactions, setTransactions] = useState([]);
 
+  const [dailyProgress, setDailyProgress] = useState({
+    completed: 0,
+    limit: 5,
+    remaining: 5,
+  });
+
   const challengeCount = transactions.filter(
     (transaction) =>
       transaction.type === "EARN" &&
@@ -57,10 +63,26 @@ function App() {
     }
   };
 
+  const fetchDailyProgress = async () => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/api/users/${USER_ID}/daily-progress`
+      );
+
+      setDailyProgress(response.data.progress);
+    } catch (error) {
+      console.log(
+        "Failed to fetch daily progress:",
+        error.message
+      );
+    }
+  };
+
   useEffect(() => {
     fetchCaptcha();
     fetchUser();
     fetchTransactions();
+    fetchDailyProgress();
   }, []);
 
   const handleSubmit = async (e) => {
@@ -98,6 +120,7 @@ function App() {
       // Get a new CAPTCHA after successful verification
       fetchCaptcha();
       fetchTransactions();
+      fetchDailyProgress();
     } catch (error) {
       setResult(
         error.response?.data?.message || "Verification failed."
@@ -205,6 +228,17 @@ function App() {
             <div className="stat">
               <span>🎯 Challenges</span>
               <strong>{challengeCount}</strong>
+            </div>
+            <div className="stat">
+              <span>📅 Today's Checks</span>
+              <strong>
+                {dailyProgress.completed} / {dailyProgress.limit}
+              </strong>
+            </div>
+
+            <div className="stat">
+              <span>🎁 Checks Remaining</span>
+              <strong>{dailyProgress.remaining}</strong>
             </div>
           </div>
         </section>
