@@ -18,7 +18,13 @@ const getCaptcha = async (req, res) => {
 
     res.json({
       success: true,
-      captcha,
+      captcha: {
+        id: captcha._id,
+        question: captcha.question,
+        options: captcha.options,
+        reward: captcha.reward,
+        expiresAt: captcha.expiresAt,
+      },
     });
   } catch (error) {
     console.error("CAPTCHA error:", error.message);
