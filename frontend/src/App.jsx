@@ -20,6 +20,7 @@ function App() {
   const [streak, setStreak] = useState(0);
 
   const [transactions, setTransactions] = useState([]);
+  const [rewards, setRewards] = useState([]);
 
   const [dailyProgress, setDailyProgress] = useState({
     completed: 0,
@@ -57,7 +58,7 @@ function App() {
 
       setResult(
         error.response?.data?.message ||
-          "CAPTCHA is not available."
+        "CAPTCHA is not available."
       );
     }
   };
@@ -102,6 +103,43 @@ function App() {
     }
   };
 
+
+  const fetchRewards = async () => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/api/rewards`
+      );
+
+      setRewards(response.data.rewards);
+    } catch (error) {
+      console.log(
+        "Failed to fetch rewards:",
+        error.message
+      );
+    }
+  };
+
+  const handleRedeem = async (rewardId) => {
+    try {
+      const response = await axios.post(
+        `${API_URL}/api/rewards/redeem`,
+        {
+          userId: USER_ID,
+          rewardId: rewardId,
+        }
+      );
+
+      setGems(response.data.gems);
+      setResult(response.data.message);
+
+      fetchTransactions();
+    } catch (error) {
+      setResult(
+        error.response?.data?.message || "Redemption failed."
+      );
+    }
+  };
+
   // -----------------------------
   // FETCH DAILY PROGRESS
   // -----------------------------
@@ -128,6 +166,7 @@ function App() {
     fetchUser();
     fetchTransactions();
     fetchDailyProgress();
+    fetchRewards();
   }, []);
 
   // -----------------------------
@@ -179,7 +218,7 @@ function App() {
     } catch (error) {
       setResult(
         error.response?.data?.message ||
-          "Verification failed."
+        "Verification failed."
       );
     } finally {
       setChecking(false);
@@ -285,11 +324,10 @@ function App() {
                       <button
                         key={option}
                         type="button"
-                        className={`captcha-option ${
-                          answer === option
-                            ? "selected"
-                            : ""
-                        }`}
+                        className={`captcha-option ${answer === option
+                          ? "selected"
+                          : ""
+                          }`}
                         onClick={() => {
                           setAnswer(option);
                           setResult("");
@@ -385,24 +423,42 @@ function App() {
 
         </section>
 
-        <section
-          className="reward-preview"
-          id="rewards"
-        >
-
-          <p className="small-title">
-            YOUR REWARDS
-          </p>
-
-          <h2>
-            Turn your Gems into rewards
-          </h2>
-
+        <section className="reward-preview" id="rewards">
+          <p className="small-title">YOUR REWARDS</p>
+          <h2>Turn your Gems into rewards</h2>
           <p>
-            Complete more challenges and build
-            your balance.
+            Complete more challenges and build your balance.
           </p>
 
+          <div className="reward-list">
+            {rewards.length === 0 ? (
+              <p>Loading rewards...</p>
+            ) : (
+              rewards.map((reward) => (
+                <div className="reward-item" key={reward._id}>
+                  <div>
+                    <h3>{reward.name}</h3>
+                    <p>{reward.description}</p>
+                  </div>
+
+                  <div className="reward-action">
+                    <div className="reward-cost">
+                      💎 {reward.cost}
+                    </div>
+
+                    <button
+                      type="button"
+                      className="redeem-btn"
+                      disabled={gems < reward.cost}
+                      onClick={() => handleRedeem(reward._id)}
+                    >
+                      {gems < reward.cost ? "Not enough Gems" : "Redeem"}
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </section>
 
         <section

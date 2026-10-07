@@ -13,6 +13,7 @@ const healthRoutes = require("./routes/healthRoutes");
 const captchaRoutes = require("./routes/captchaRoutes");
 const userRoutes = require("./routes/userRoutes");
 const transactionRoutes = require("./routes/transactionRoutes");
+const rewardRoutes = require("./routes/rewardRoutes");
 
 const app = express();
 
@@ -26,6 +27,7 @@ app.use("/api/health", healthRoutes);
 app.use("/api/captcha", captchaRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/transactions", transactionRoutes);
+app.use("/api/rewards", rewardRoutes);
 
 // Home route
 app.get("/", (req, res) => {
