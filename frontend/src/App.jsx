@@ -15,6 +15,8 @@ function App() {
 
   const [checking, setChecking] = useState(false);
 
+  const [recentEarnings, setRecentEarnings] = useState([]);
+
   const [gems, setGems] = useState(0);
 
   const [streak, setStreak] = useState(0);
@@ -26,6 +28,13 @@ function App() {
     completed: 0,
     limit: 5,
     remaining: 5,
+  });
+
+  const [walletSummary, setWalletSummary] = useState({
+    currentGems: 0,
+    totalEarned: 0,
+    totalRedeemed: 0,
+    calculatedBalance: 0,
   });
 
   const challengeCount = transactions.filter(
@@ -103,6 +112,36 @@ function App() {
     }
   };
 
+  const fetchRecentEarnings = async () => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/api/transactions/${USER_ID}/recent-earnings`
+      );
+
+      setRecentEarnings(response.data.earnings);
+    } catch (error) {
+      console.log(
+        "Failed to fetch recent earnings:",
+        error.message
+      );
+    }
+  };
+
+
+  const fetchWalletSummary = async () => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/api/transactions/${USER_ID}/wallet-summary`
+      );
+
+      setWalletSummary(response.data.wallet);
+    } catch (error) {
+      console.log(
+        "Failed to fetch wallet summary:",
+        error.message
+      );
+    }
+  };
 
   const fetchRewards = async () => {
     try {
@@ -133,6 +172,7 @@ function App() {
       setResult(response.data.message);
 
       fetchTransactions();
+      fetchWalletSummary();
     } catch (error) {
       setResult(
         error.response?.data?.message || "Redemption failed."
@@ -167,6 +207,8 @@ function App() {
     fetchTransactions();
     fetchDailyProgress();
     fetchRewards();
+    fetchRecentEarnings();
+    fetchWalletSummary();
   }, []);
 
   // -----------------------------
@@ -209,6 +251,12 @@ function App() {
 
       // Update transactions
       await fetchTransactions();
+
+      // Update recent earnings
+      await fetchRecentEarnings();
+
+      // Update wallet summary
+      await fetchWalletSummary();
 
       // Update daily progress
       await fetchDailyProgress();
@@ -389,6 +437,16 @@ function App() {
             </div>
 
             <div className="stat">
+              <span>📈 Total Earned</span>
+              <strong>{walletSummary.totalEarned}</strong>
+            </div>
+
+            <div className="stat">
+              <span>🎁 Total Redeemed</span>
+              <strong>{walletSummary.totalRedeemed}</strong>
+            </div>
+
+            <div className="stat">
 
               <span>🎯 Challenges</span>
 
@@ -459,6 +517,38 @@ function App() {
               ))
             )}
           </div>
+        </section>
+
+        <section className="recent-earnings">
+          <p className="small-title">RECENT EARNING</p>
+          <h2>Your latest rewards</h2>
+
+          {recentEarnings.length === 0 ? (
+            <p>No earnings yet.</p>
+          ) : (
+            <div className="earning-list">
+              {recentEarnings.map((earning) => (
+                <div
+                  className="earning-item"
+                  key={earning._id}
+                >
+                  <div>
+                    <strong>{earning.description}</strong>
+                    <p>
+                      {earning.source} •{" "}
+                      {new Date(
+                        earning.createdAt
+                      ).toLocaleDateString()}
+                    </p>
+                  </div>
+
+                  <strong className="earning-amount">
+                    +{earning.amount} Gem
+                  </strong>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
 
         <section

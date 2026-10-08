@@ -450,3 +450,44 @@ main {
 .redeem-btn:disabled:hover {
   background: #d1d5db;
 }
+
+.recent-earnings {
+  margin-top: 40px;
+}
+
+.recent-earnings h2 {
+  margin: 0 0 8px;
+}
+
+.earning-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.earning-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.earning-item strong {
+  font-size: 15px;
+}
+
+.earning-item p {
+  margin: 5px 0 0;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.earning-amount {
+  color: #16a34a;
+  white-space: nowrap;
+}
