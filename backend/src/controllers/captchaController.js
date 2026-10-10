@@ -2,21 +2,63 @@ const Captcha = require("../models/Captcha");
 const User = require("../models/User");
 const Transaction = require("../models/Transaction");
 
+
+const createNextCaptcha = async (userId) => {
+  const questions = [
+    {
+      question: "R5K8M",
+      options: ["R5K8N", "R5K8M", "R5K9M", "R6K8M"],
+      correctAnswer: "R5K8M",
+    },
+    {
+      question: "K7M2P",
+      options: ["K7M2P", "K7M2Q", "K8M2P", "K7N2P"],
+      correctAnswer: "K7M2P",
+    },
+    {
+      question: "A4B9C",
+      options: ["A4B9D", "A4C9C", "A4B9C", "A5B9C"],
+      correctAnswer: "A4B9C",
+    },
+  ];
+
+  const item = questions[Math.floor(Math.random() * questions.length)];
+
+  return Captcha.create({
+    ...item,
+    reward: 1,
+    isActive: true,
+    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    userId,
+  });
+};
+
+
+
 const getCaptcha = async (req, res) => {
   try {
-    const captcha = await Captcha.findOne({
+    const { userId } = req.query;
+
+    const filter = {
       isActive: true,
       expiresAt: { $gt: new Date() },
-    });
+    };
+
+    if (userId) {
+      filter.userId = userId;
+    }
+
+    const captcha = await Captcha.findOne(filter);
 
     if (!captcha) {
+      console.log("No active CAPTCHA found for user:", userId || "any user");
       return res.status(404).json({
         success: false,
         message: "No CAPTCHA available",
       });
     }
 
-    res.json({
+    return res.json({
       success: true,
       captcha: {
         id: captcha._id,
@@ -28,13 +70,13 @@ const getCaptcha = async (req, res) => {
     });
   } catch (error) {
     console.error("CAPTCHA error:", error.message);
-
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Server error",
     });
   }
 };
+
 
 const verifyCaptcha = async (req, res) => {
   try {
@@ -159,6 +201,8 @@ const verifyCaptcha = async (req, res) => {
 
     captcha.isActive = false;
     await captcha.save();
+
+    await createNextCaptcha(user._id);
 
     res.json({
       success: true,

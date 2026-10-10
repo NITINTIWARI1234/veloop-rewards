@@ -14,6 +14,7 @@ const captchaRoutes = require("./routes/captchaRoutes");
 const userRoutes = require("./routes/userRoutes");
 const transactionRoutes = require("./routes/transactionRoutes");
 const rewardRoutes = require("./routes/rewardRoutes");
+const authRoutes = require("./routes/authRoutes");
 
 const app = express();
 
@@ -28,6 +29,7 @@ app.use("/api/captcha", captchaRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/rewards", rewardRoutes);
+app.use("/api/auth", authRoutes);
 
 // Home route
 app.get("/", (req, res) => {

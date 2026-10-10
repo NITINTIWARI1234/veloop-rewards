@@ -1,10 +1,15 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import "./App.css";
+import Navbar from "./components/Navbar";
 
 const API_URL = "http://localhost:5000";
 
-const USER_ID = "6abcd9743be173662986f0b0";
+const savedUser = JSON.parse(
+  localStorage.getItem("veloopUser") || "null"
+);
+
+const USER_ID = savedUser?.id;
 
 function App() {
   const [captcha, setCaptcha] = useState(null);
@@ -112,20 +117,7 @@ function App() {
     }
   };
 
-  const fetchRecentEarnings = async () => {
-    try {
-      const response = await axios.get(
-        `${API_URL}/api/transactions/${USER_ID}/recent-earnings`
-      );
 
-      setRecentEarnings(response.data.earnings);
-    } catch (error) {
-      console.log(
-        "Failed to fetch recent earnings:",
-        error.message
-      );
-    }
-  };
 
 
   const fetchWalletSummary = async () => {
@@ -198,16 +190,26 @@ function App() {
     }
   };
 
+
+
   // -----------------------------
   // INITIAL LOAD
   // -----------------------------
   useEffect(() => {
+
+    if (!USER_ID) {
+      window.location.replace("/login");
+      return;
+    }
+
+
+
     fetchCaptcha();
     fetchUser();
     fetchTransactions();
     fetchDailyProgress();
     fetchRewards();
-    fetchRecentEarnings();
+
     fetchWalletSummary();
   }, []);
 
@@ -252,8 +254,7 @@ function App() {
       // Update transactions
       await fetchTransactions();
 
-      // Update recent earnings
-      await fetchRecentEarnings();
+
 
       // Update wallet summary
       await fetchWalletSummary();
@@ -291,23 +292,10 @@ function App() {
   return (
     <div className="app">
 
-      <header className="navbar">
+      <Navbar gems={gems} />
 
-        <div className="logo">
-          VELOop <span>Rewards</span>
-        </div>
 
-        <nav>
-          <a href="#earn">Earn</a>
-          <a href="#rewards">Rewards</a>
-          <a href="#history">History</a>
-        </nav>
 
-        <div className="wallet">
-          💎 <span>{gems} Gems</span>
-        </div>
-
-      </header>
 
       <main>
 
@@ -519,101 +507,108 @@ function App() {
           </div>
         </section>
 
-        <section className="recent-earnings">
-          <p className="small-title">RECENT EARNING</p>
-          <h2>Your latest rewards</h2>
 
-          {recentEarnings.length === 0 ? (
-            <p>No earnings yet.</p>
-          ) : (
-            <div className="earning-list">
-              {recentEarnings.map((earning) => (
-                <div
-                  className="earning-item"
-                  key={earning._id}
-                >
-                  <div>
-                    <strong>{earning.description}</strong>
-                    <p>
-                      {earning.source} •{" "}
-                      {new Date(
-                        earning.createdAt
-                      ).toLocaleDateString()}
-                    </p>
-                  </div>
 
-                  <strong className="earning-amount">
-                    +{earning.amount} Gem
-                  </strong>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
 
-        <section
-          className="history-preview"
-          id="history"
-        >
-
-          <p className="small-title">
-            RECENT ACTIVITY
+        <section className="wallet-overview">
+          <p className="small-title">YOUR WALLET</p>
+          <h2>Wallet Overview</h2>
+          <p className="wallet-description">
+            Track your Gems and rewards in one place.
           </p>
 
-          <h2>
-            Transaction History
-          </h2>
+          <div className="wallet-summary-grid">
+            <div className="wallet-summary-card earned-card">
+              <div className="wallet-card-icon">📈</div>
+              <p>Total Earned</p>
+              <h3>{walletSummary.totalEarned} <span>Gems</span></h3>
+              <small>Your lifetime earnings</small>
+            </div>
+
+            <div className="wallet-summary-card redeemed-card">
+              <div className="wallet-card-icon">🎁</div>
+              <p>Total Redeemed</p>
+              <h3>{walletSummary.totalRedeemed} <span>Gems</span></h3>
+              <small>Gems spent on rewards</small>
+            </div>
+
+            <div className="wallet-summary-card balance-card">
+              <div className="wallet-card-icon">💎</div>
+              <p>Current Balance</p>
+              <h3>{walletSummary.currentGems} <span>Gems</span></h3>
+              <small>Available to redeem</small>
+            </div>
+          </div>
+        </section>
+
+
+
+        <section className="history-preview" id="history">
+          <div className="history-heading">
+            <div>
+              <p className="small-title">YOUR ACTIVITY</p>
+              <h2>Transaction History</h2>
+              <p className="history-subtitle">
+                Keep track of your Gems earned and redeemed.
+              </p>
+            </div>
+
+            <div className="history-count">
+              {transactions.length} transactions
+            </div>
+          </div>
 
           {transactions.length === 0 ? (
-            <p>
-              No transactions yet.
-            </p>
+            <div className="history-empty">
+              <span>💎</span>
+              <h3>No activity yet</h3>
+              <p>Complete a CAPTCHA to see your first transaction here.</p>
+            </div>
           ) : (
             <div className="transaction-list">
+              {transactions.map((transaction) => {
+                const isEarned = transaction.type === "EARN";
 
-              {transactions.map(
-                (transaction) => (
-
+                return (
                   <div
                     className="transaction-item"
                     key={transaction._id}
                   >
-
-                    <div>
-
-                      <strong>
-                        {transaction.description}
-                      </strong>
-
-                      <p>
-                        {transaction.source} •{" "}
-                        {new Date(
-                          transaction.createdAt
-                        ).toLocaleDateString()}
-                      </p>
-
+                    <div className={`transaction-icon ${isEarned ? "icon-earned" : "icon-redeemed"}`}>
+                      {isEarned ? "↗" : "🎁"}
                     </div>
 
-                    <strong>
-                      {transaction.type === "EARN"
-                        ? "+"
-                        : "-"}
-                      {transaction.amount} Gem
-                    </strong>
+                    <div className="transaction-details">
+                      <strong>{transaction.description}</strong>
+                      <p>
+                        {transaction.source === "CAPTCHA"
+                          ? "CAPTCHA Challenge"
+                          : transaction.source === "REWARD"
+                            ? "Reward Redemption"
+                            : transaction.source}
+                        {" · "}
+                        {new Date(transaction.createdAt).toLocaleDateString()}
+                      </p>
+                      <span className={`transaction-status ${isEarned ? "status-earned" : "status-redeemed"}`}>
+                        {isEarned ? "✓ Gems earned" : "✓ Reward redeemed"}
+                      </span>
+                    </div>
 
+                    <div className={`transaction-amount ${isEarned ? "amount-earned" : "amount-redeemed"}`}>
+                      {isEarned ? "+" : "-"}{transaction.amount}
+                      <span>Gems</span>
+                    </div>
                   </div>
-
-                )
-              )}
-
+                );
+              })}
             </div>
           )}
-
         </section>
+
 
       </main>
 
-    </div>
+    </div >
   );
 }
 

@@ -16,6 +16,12 @@ const userSchema = new mongoose.Schema(
       trim: true,
     },
 
+    passwordHash: {
+      type: String,
+      default: null,
+      select: false,
+    },
+
     gems: {
       type: Number,
       default: 0,
