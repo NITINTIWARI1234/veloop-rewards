@@ -5,7 +5,9 @@ import { GoogleLogin } from "@react-oauth/google";
 import axios from "axios";
 import "./Auth.css";
 
-const API_URL = "http://localhost:5000";
+const API_URL = import.meta.env.DEV
+    ? "http://localhost:5000"
+    : "";
 
 function Login() {
     const [email, setEmail] = useState("");

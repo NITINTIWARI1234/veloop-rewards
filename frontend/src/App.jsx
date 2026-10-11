@@ -3,15 +3,18 @@ import axios from "axios";
 import "./App.css";
 import Navbar from "./components/Navbar";
 
-const API_URL = "http://localhost:5000";
+const API_URL = import.meta.env.DEV
+  ? "http://localhost:5000"
+  : "";
 
-const savedUser = JSON.parse(
-  localStorage.getItem("veloopUser") || "null"
-);
 
-const USER_ID = savedUser?.id;
 
 function App() {
+  const savedUser = JSON.parse(
+    localStorage.getItem("veloopUser") || "null"
+  );
+
+  const USER_ID = savedUser?.id;
   const [captcha, setCaptcha] = useState(null);
 
   const [answer, setAnswer] = useState("");
